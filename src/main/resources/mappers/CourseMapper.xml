@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.CourseMapper">
+
+    <resultMap id="CourseResultMap" type="Course">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="code" column="code"/>
+        <result property="credits" column="credits"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="CourseWithStudentsResultMap" type="Course" extends="CourseResultMap">
+        <collection property="students" ofType="Student">
+            <id property="id" column="student_id"/>
+            <result property="name" column="student_name"/>
+            <result property="email" column="student_email"/>
+            <result property="phone" column="student_phone"/>
+            <result property="departmentId" column="department_id"/>
+        </collection>
+    </resultMap>
+
+    <select id="findAll" resultMap="CourseResultMap">
+        SELECT id, name, code, credits, description, created_at, updated_at
+        FROM course
+        ORDER BY name
+    </select>
+
+    <select id="findById" resultMap="CourseResultMap">
+        SELECT id, name, code, credits, description, created_at, updated_at
+        FROM course
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByIdWithStudents" resultMap="CourseWithStudentsResultMap">
+        SELECT 
+            c.id, c.name, c.code, c.credits, c.description, c.created_at, c.updated_at,
+            s.id as student_id, s.name as student_name, s.email as student_email,
+            s.phone as student_phone, s.department_id
+        FROM course c
+        LEFT JOIN student_course sc ON c.id = sc.course_id
+        LEFT JOIN student s ON sc.student_id = s.id
+        WHERE c.id = #{id}
+        ORDER BY s.name
+    </select>
+
+    <select id="findByCode" resultMap="CourseResultMap">
+        SELECT id, name, code, credits, description, created_at, updated_at
+        FROM course
+        WHERE code = #{code}
+    </select>
+
+    <select id="findByStudentId" resultMap="CourseResultMap">
+        SELECT c.id, c.name, c.code, c.credits, c.description, c.created_at, c.updated_at
+        FROM course c
+        INNER JOIN student_course sc ON c.id = sc.course_id
+        WHERE sc.student_id = #{studentId}
+        ORDER BY c.name
+    </select>
+
+    <insert id="insert" parameterType="Course" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course (name, code, credits, description, created_at, updated_at)
+        VALUES (#{name}, #{code}, #{credits}, #{description}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <update id="update" parameterType="Course">
+        UPDATE course 
+        SET name = #{name}, 
+            code = #{code}, 
+            credits = #{credits}, 
+            description = #{description},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM course WHERE id = #{id}
+    </delete>
+
+    <select id="countStudentsByCourseId" resultType="int">
+        SELECT COUNT(*) FROM student_course WHERE course_id = #{courseId}
+    </select>
+
+</mapper>

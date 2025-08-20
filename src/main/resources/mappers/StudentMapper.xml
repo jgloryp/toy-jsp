@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.StudentMapper">
+
+    <resultMap id="StudentResultMap" type="Student">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="StudentWithDepartmentResultMap" type="Student" extends="StudentResultMap">
+        <association property="department" javaType="Department">
+            <id property="id" column="dept_id"/>
+            <result property="name" column="dept_name"/>
+            <result property="description" column="dept_description"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="StudentWithCoursesResultMap" type="Student" extends="StudentResultMap">
+        <collection property="courses" ofType="Course">
+            <id property="id" column="course_id"/>
+            <result property="name" column="course_name"/>
+            <result property="code" column="course_code"/>
+            <result property="credits" column="course_credits"/>
+            <result property="description" column="course_description"/>
+        </collection>
+    </resultMap>
+
+    <select id="findAll" resultMap="StudentResultMap">
+        SELECT id, name, email, phone, department_id, created_at, updated_at
+        FROM student
+        ORDER BY name
+    </select>
+
+    <select id="findById" resultMap="StudentResultMap">
+        SELECT id, name, email, phone, department_id, created_at, updated_at
+        FROM student
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByIdWithDepartment" resultMap="StudentWithDepartmentResultMap">
+        SELECT 
+            s.id, s.name, s.email, s.phone, s.department_id, s.created_at, s.updated_at,
+            d.id as dept_id, d.name as dept_name, d.description as dept_description
+        FROM student s
+        INNER JOIN department d ON s.department_id = d.id
+        WHERE s.id = #{id}
+    </select>
+
+    <select id="findByIdWithCourses" resultMap="StudentWithCoursesResultMap">
+        SELECT 
+            s.id, s.name, s.email, s.phone, s.department_id, s.created_at, s.updated_at,
+            c.id as course_id, c.name as course_name, c.code as course_code,
+            c.credits as course_credits, c.description as course_description
+        FROM student s
+        LEFT JOIN student_course sc ON s.id = sc.student_id
+        LEFT JOIN course c ON sc.course_id = c.id
+        WHERE s.id = #{id}
+        ORDER BY c.name
+    </select>
+
+    <select id="findByDepartmentId" resultMap="StudentResultMap">
+        SELECT id, name, email, phone, department_id, created_at, updated_at
+        FROM student
+        WHERE department_id = #{departmentId}
+        ORDER BY name
+    </select>
+
+    <insert id="insert" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student (name, email, phone, department_id, created_at, updated_at)
+        VALUES (#{name}, #{email}, #{phone}, #{departmentId}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <update id="update" parameterType="Student">
+        UPDATE student 
+        SET name = #{name}, 
+            email = #{email}, 
+            phone = #{phone}, 
+            department_id = #{departmentId},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM student WHERE id = #{id}
+    </delete>
+
+    <select id="findByEmailLike" resultMap="StudentResultMap">
+        SELECT id, name, email, phone, department_id, created_at, updated_at
+        FROM student
+        WHERE email LIKE #{email}
+        ORDER BY name
+    </select>
+
+</mapper>

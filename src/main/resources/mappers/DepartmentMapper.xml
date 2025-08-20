@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.DepartmentMapper">
+
+    <resultMap id="DepartmentResultMap" type="Department">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="DepartmentWithStudentsResultMap" type="Department" extends="DepartmentResultMap">
+        <collection property="students" ofType="Student">
+            <id property="id" column="student_id"/>
+            <result property="name" column="student_name"/>
+            <result property="email" column="student_email"/>
+            <result property="phone" column="student_phone"/>
+            <result property="departmentId" column="department_id"/>
+            <result property="createdAt" column="student_created_at"/>
+            <result property="updatedAt" column="student_updated_at"/>
+        </collection>
+    </resultMap>
+
+    <select id="findAll" resultMap="DepartmentResultMap">
+        SELECT id, name, description, created_at, updated_at
+        FROM department
+        ORDER BY name
+    </select>
+
+    <select id="findById" resultMap="DepartmentResultMap">
+        SELECT id, name, description, created_at, updated_at
+        FROM department
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByIdWithStudents" resultMap="DepartmentWithStudentsResultMap">
+        SELECT 
+            d.id, d.name, d.description, d.created_at, d.updated_at,
+            s.id as student_id, s.name as student_name, s.email as student_email,
+            s.phone as student_phone, s.department_id, 
+            s.created_at as student_created_at, s.updated_at as student_updated_at
+        FROM department d
+        LEFT JOIN student s ON d.id = s.department_id
+        WHERE d.id = #{id}
+        ORDER BY s.name
+    </select>
+
+    <insert id="insert" parameterType="Department" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO department (name, description, created_at, updated_at)
+        VALUES (#{name}, #{description}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <update id="update" parameterType="Department">
+        UPDATE department 
+        SET name = #{name}, 
+            description = #{description}, 
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM department WHERE id = #{id}
+    </delete>
+
+    <select id="countStudentsByDepartmentId" resultType="int">
+        SELECT COUNT(*) FROM student WHERE department_id = #{departmentId}
+    </select>
+
+</mapper>
